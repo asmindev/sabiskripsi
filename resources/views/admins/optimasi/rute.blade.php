@@ -20,6 +20,7 @@
         border-radius: 8px;
         overflow: hidden;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        position: relative;
     }
 
     .loading-spinner {
@@ -75,6 +76,20 @@
 
     #notificationSidebar.show {
         right: 1rem;
+    }
+
+    .vehicle-selector-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-left: 8px;
+    }
+
+    #vehicleSelector:disabled {
+        opacity: 0.6;
+        cursor: wait;
     }
 </style>
 @endpush
@@ -162,21 +177,45 @@
                     <h3 class="text-lg font-semibold text-gray-900">Visualisasi Peta Rute</h3>
                     <div class="flex items-center space-x-2">
                         <div class="flex items-center space-x-1">
+                            <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                            <span class="text-xs text-gray-600">Depot Start</span>
+                        </div>
+                        <div class="flex items-center space-x-1">
                             <div class="w-3 h-3 bg-red-500 rounded-full"></div>
-                            <span class="text-xs text-gray-600">Depot</span>
+                            <span class="text-xs text-gray-600">TPA</span>
                         </div>
                         <div class="flex items-center space-x-1">
                             <div class="w-3 h-3 bg-green-500 rounded-full"></div>
                             <span class="text-xs text-gray-600">TPS</span>
                         </div>
-                        <div class="flex items-center space-x-1">
-                            <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
-                            <span class="text-xs text-gray-600">Rute</span>
-                        </div>
                     </div>
                 </div>
 
-                <div id="mapContainer" class="map-container"></div>
+                <!-- Vehicle Selector -->
+                <div id="vehicleSelectorContainer" class="mb-4 hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i data-lucide="truck" class="inline h-4 w-4 mr-1"></i>
+                        Pilih Armada untuk Melihat Rute
+                    </label>
+                    <select id="vehicleSelector" onchange="filterRouteByVehicle()"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                        <option value="all">🚛 Tampilkan Semua Armada</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Pilih armada untuk melihat detail rute dan TPS yang dikunjungi
+                    </p>
+                </div>
+
+                <div id="mapContainer" class="map-container relative">
+                    <!-- Map Loading Overlay -->
+                    <div id="mapLoadingOverlay" style="display: none;"
+                        class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center rounded-lg z-10">
+                        <div class="text-center">
+                            <div class="loading-spinner mx-auto mb-2"></div>
+                            <p class="text-sm text-gray-700 font-medium">Memuat rute...</p>
+                            <p class="text-xs text-gray-500">Mengambil data dari server</p>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Algorithm Status -->
                 <div id="algorithmStatus" class="mt-4 p-4 bg-gray-50 rounded-lg hidden">
@@ -261,19 +300,27 @@
 <script>
     // Set locations data from server
     const locations = {
-        depot: {
-            name: 'Depot Utama',
-            lat: {{ $depoData->first()?->latitude ?? -3.9778 }},
-            lng: {{ $depoData->first()?->longitude ?? 122.5150 }}
+        depotStart: {
+            name: '{{ $depotStart->nama ?? "Depot Awal" }}',
+            lat: {{ $depotStart->latitude ?? -3.9778 }},
+            lng: {{ $depotStart->longitude ?? 122.5150 }},
+            type: 'startpoint'
+        },
+        depotEnd: {
+            name: '{{ $depotEnd->nama ?? "TPA" }}',
+            lat: {{ $depotEnd->latitude ?? -3.9778 }},
+            lng: {{ $depotEnd->longitude ?? 122.5150 }},
+            type: 'endpoint'
         },
         tps: [
             @foreach($tpsData as $tps)
             {
-                id: '{{ $tps->id }}',
+                id: 'tps{{ $tps->id }}',
                 name: '{{ $tps->nama }}',
                 lat: {{ $tps->latitude }},
                 lng: {{ $tps->longitude }},
-                demand: {{ $tps->kapasitas ?? 5 }}
+                demand: {{ $tps->kapasitas ?? 5 }},
+                armada_id: {{ $tps->armada_id ?? 'null' }}
             }@if(!$loop->last),@endif
             @endforeach
         ]
@@ -287,12 +334,18 @@
     if (window.VRPApp) {
         window.VRPApp.setLocations(locations);
     }
+
+    // Function to filter route by selected vehicle
+    function filterRouteByVehicle() {
+        const selectedVehicle = document.getElementById('vehicleSelector').value;
+        if (window.VRPApp) {
+            window.VRPApp.filterByVehicle(selectedVehicle);
+        }
+    }
+
+    // Make function globally available
+    window.filterRouteByVehicle = filterRouteByVehicle;
 </script>
 
 @endpush
 @endsection
-{{-- </body> --}}
-
-{{--
-
-</html> --}}

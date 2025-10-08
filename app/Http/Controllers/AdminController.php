@@ -22,18 +22,6 @@ class AdminController extends Controller
     }
 
     /**
-     * Display the Depo data page.
-     */
-    public function dataDepo()
-    {
-        $depoData = Depots::all();
-
-        return view('admins.data.depo', [
-            'depoData' => $depoData
-        ]);
-    }
-
-    /**
      * Display the Armada data page.
      */
     public function dataArmada()
@@ -51,12 +39,22 @@ class AdminController extends Controller
     public function optimasiRute()
     {
         $tpsData = TPS::all();
-        $depoData = Depots::all();
+        $depotStart = Depots::where('type', 'startpoint')->first();
+        $depotEnd = Depots::where('type', 'endpoint')->first();
         $armadaData = Armada::where('status', 'aktif')->get();
+
+        // Fallback if type not set
+        if (!$depotStart) {
+            $depotStart = Depots::first();
+        }
+        if (!$depotEnd) {
+            $depotEnd = Depots::where('id', '!=', $depotStart->id)->first() ?? $depotStart;
+        }
 
         return view('admins.optimasi.rute', [
             'tpsData' => $tpsData,
-            'depoData' => $depoData,
+            'depotStart' => $depotStart,
+            'depotEnd' => $depotEnd,
             'armadaData' => $armadaData
         ]);
     }

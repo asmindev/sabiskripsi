@@ -8,14 +8,16 @@ class VRPdjakstrasSolvers
     protected $vehicleCapacity;
     protected $vehicleCount;
     protected $vehicleNames;
+    protected $assignments;
     protected $graph;
 
-    public function __construct($locations, $vehicleCapacity, $vehicleCount, $vehicleNames)
+    public function __construct($locations, $vehicleCapacity, $vehicleCount, $vehicleNames, $assignments = [])
     {
         $this->locations = $locations;
         $this->vehicleCapacity = $vehicleCapacity;
         $this->vehicleCount = $vehicleCount;
         $this->vehicleNames = $vehicleNames;
+        $this->assignments = $assignments;
 
         // Bangun graph dengan jarak antar node
         $this->graph = $this->buildGraph();
@@ -24,29 +26,52 @@ class VRPdjakstrasSolvers
     public function solve()
     {
         $routes = [];
-        $unassigned = $this->locations['tps'];
 
-        for ($v = 0; $v < $this->vehicleCount && count($unassigned) > 0; $v++) {
-            $routes[] = $this->createRoute($unassigned, $v);
+        // Process each vehicle with its assigned TPS
+        for ($v = 0; $v < $this->vehicleCount; $v++) {
+            // Get TPS assigned to this vehicle
+            $assignedTpsIds = $this->assignments[$v] ?? [];
+
+            if (empty($assignedTpsIds)) {
+                // If no TPS assigned, create empty route
+                $vehicleName = $this->vehicleNames[$v] ?? 'Truk ' . chr(65 + $v);
+                $routes[] = [
+                    'vehicle' => $vehicleName,
+                    'path' => ['depotStart', 'depotEnd', 'depotStart'],
+                    'tpsVisited' => [],
+                    'totalDistance' => 0,
+                    'totalTime' => 0,
+                    'load' => 0
+                ];
+                continue;
+            }
+
+            // Filter TPS for this vehicle
+            $vehicleTps = array_filter($this->locations['tps'], function ($tps) use ($assignedTpsIds) {
+                return in_array($tps['id'], $assignedTpsIds);
+            });
+
+            $routes[] = $this->createRoute(array_values($vehicleTps), $v);
         }
 
         return $routes;
     }
 
-    private function createRoute(&$unassigned, $vehicleIndex)
+    private function createRoute($assignedTps, $vehicleIndex)
     {
         $vehicleCapacitys = $this->vehicleCapacity[$vehicleIndex];
         $vehicleName = $this->vehicleNames[$vehicleIndex] ?? 'Truk ' . chr(65 + $vehicleIndex);
         $route = [
             'vehicle' => $vehicleName,
-            'path' => ['depot'],
+            'path' => ['depotStart'],
             'tpsVisited' => [],
             'totalDistance' => 0,
             'totalTime' => 0,
             'load' => 0
         ];
 
-        $currentLocation = 'depot';
+        $currentLocation = 'depotStart';
+        $unassigned = $assignedTps;
 
         while (count($unassigned) > 0 && $route['load'] < $vehicleCapacitys) {
             $nearest = null;
@@ -78,10 +103,15 @@ class VRPdjakstrasSolvers
             }
         }
 
-        // Tambahkan jarak balik ke depot
+        // Pergi ke depot end (TPA) untuk buang sampah
         $distances = $this->dijkstra($currentLocation);
-        $route['totalDistance'] += $distances['depot'] ?? 0;
-        $route['path'][] = 'depot';
+        $route['totalDistance'] += $distances['depotEnd'] ?? 0;
+        $route['path'][] = 'depotEnd';
+
+        // Kembali ke depot start
+        $distances = $this->dijkstra('depotEnd');
+        $route['totalDistance'] += $distances['depotStart'] ?? 0;
+        $route['path'][] = 'depotStart';
 
         $route['totalTime'] = ($route['totalDistance'] / 30) * 60 + (count($route['tpsVisited']) * 10);
 
@@ -90,7 +120,11 @@ class VRPdjakstrasSolvers
 
     private function buildGraph()
     {
-        $nodes = array_merge(['depot' => $this->locations['depot']], collect($this->locations['tps'])->keyBy('id')->toArray());
+        $nodes = array_merge(
+            ['depotStart' => $this->locations['depotStart']],
+            ['depotEnd' => $this->locations['depotEnd']],
+            collect($this->locations['tps'])->keyBy('id')->toArray()
+        );
         $graph = [];
 
         foreach ($nodes as $id1 => $point1) {
@@ -155,7 +189,7 @@ class VRPdjakstrasSolvers
         $dlat = $lat2 - $lat1;
         $dlon = $lon2 - $lon1;
 
-        $a = sin($dlat/2) ** 2 + cos($lat1) * cos($lat2) * sin($dlon/2) ** 2;
+        $a = sin($dlat / 2) ** 2 + cos($lat1) * cos($lat2) * sin($dlon / 2) ** 2;
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
         $r = 6371;
         return $r * $c;

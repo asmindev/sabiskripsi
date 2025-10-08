@@ -54,36 +54,59 @@ class RouteOptimizationControllers extends Controller
     }
     public function runVRP(Request $request)
     {
-        // $truckCount = (int) $request->truckCount;
-        // $capacity = (int) $request->truckCapacity;
-
-        // use App\Models\Armada;
-
-        $armadas = Armada::all(); // atau ->where('status', 'aktif')->get();
+        // Get all armadas with their assigned TPS
+        $armadas = Armada::with('tps')->get();
         $truckCount = $armadas->count();
         $capacity = $armadas->pluck('kapasitas')->toArray();
         $vehicleNames = $armadas->pluck('namaTruk')->toArray();
 
-        $depot = Depots::first();
+        // Get depot start (startpoint) and depot end (endpoint/TPA)
+        $depotStart = Depots::where('type', 'startpoint')->first();
+        $depotEnd = Depots::where('type', 'endpoint')->first();
+
+        // Fallback if type not set
+        if (!$depotStart) {
+            $depotStart = Depots::first();
+        }
+        if (!$depotEnd) {
+            $depotEnd = Depots::where('id', '!=', $depotStart->id)->first() ?? $depotStart;
+        }
+
+        // Create assignments mapping armada to their TPS
+        $assignments = [];
+        foreach ($armadas as $index => $armada) {
+            $assignments[$index] = $armada->tps->map(fn($t) => 'tps' . $t->id)->toArray();
+        }
+
+        // Get all TPS with their armada_id
         $tpsList = TPS::all();
 
         $locations = [
-            'depot' => [
-                'id' => 'depot',
-                'nama' => $depot->nama,
-                'lat' => $depot->latitude,
-                'lng' => $depot->longitude
+            'depotStart' => [
+                'id' => 'depotStart',
+                'nama' => $depotStart->nama,
+                'lat' => $depotStart->latitude,
+                'lng' => $depotStart->longitude,
+                'type' => 'startpoint'
+            ],
+            'depotEnd' => [
+                'id' => 'depotEnd',
+                'nama' => $depotEnd->nama,
+                'lat' => $depotEnd->latitude,
+                'lng' => $depotEnd->longitude,
+                'type' => 'endpoint'
             ],
             'tps' => $tpsList->map(fn($t) => [
                 'id' => 'tps' . $t->id,
                 'nama' => $t->nama,
                 'lat' => $t->latitude,
                 'lng' => $t->longitude,
-                'demand' => $t->kapasitas
+                'demand' => $t->kapasitas,
+                'armada_id' => $t->armada_id
             ])->toArray()
         ];
 
-        $solver = new VRPdjakstrasSolvers($locations, $capacity, $truckCount, $vehicleNames);
+        $solver = new VRPdjakstrasSolvers($locations, $capacity, $truckCount, $vehicleNames, $assignments);
         $routes = $solver->solve();
 
         return response()->json([

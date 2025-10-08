@@ -4,7 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ArmadaController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\DepoControllers;
+use App\Http\Controllers\DepotsController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PetugasController;
 use App\Http\Controllers\RouteOptimizationControllers;
@@ -44,10 +44,13 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::put('/armadas/{id}', [ArmadaController::class, 'update'])->name('armadas.update');
     Route::delete('/armadas/{id}', [ArmadaController::class, 'destroy'])->name('armadas.destroy');
 
-    // Depo
-    Route::post('/depos', [DepoControllers::class, 'store']);
-    Route::put('/depos/{id}', [DepoControllers::class, 'update']);
-    Route::delete('/depos/{id}', [DepoControllers::class, 'destroy']);
+    // Depot
+    Route::get('/depot', [DepotsController::class, 'index'])->name('admin.depot.index');
+    Route::get('/depot/create', [DepotsController::class, 'create'])->name('admin.depot.create');
+    Route::post('/depot', [DepotsController::class, 'store'])->name('depot.store');
+    Route::get('/depot/{id}/edit', [DepotsController::class, 'edit'])->name('admin.depot.edit');
+    Route::put('/depot/{id}', [DepotsController::class, 'update'])->name('depot.update');
+    Route::delete('/depot/{id}', [DepotsController::class, 'destroy'])->name('depot.destroy');
 
     // TPS
     Route::get('/tps/create', [TpsController::class, 'create'])->name('tps.create');

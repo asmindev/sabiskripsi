@@ -261,58 +261,6 @@
         let markersLayerGroup;
         let trucksLayerGroup;
         let currentRouting = null;
-
-        // Data untuk truk dan TPS di Kendari
-        // const trucksData = [
-        //     {
-        //         id: 'A-001',
-        //         name: 'Truk Sampah A-001',
-        //         driver: 'Budi Santoso',
-        //         position: [-3.9945, 122.5137],
-        //         status: 'Dalam Perjalanan',
-        //         speed: '25 km/h',
-        //         fuel: 85,
-        //         lastUpdate: '2 menit lalu'
-        //     },
-        //     {
-        //         id: 'B-002',
-        //         name: 'Truk Sampah B-002',
-        //         driver: 'Agus Wijaya',
-        //         position: [-3.9825, 122.4987],
-        //         status: 'Siap Berangkat',
-        //         speed: '0 km/h',
-        //         fuel: 92,
-        //         lastUpdate: '30 detik lalu'
-        //     },
-        //     {
-        //         id: 'C-003',
-        //         name: 'Truk Sampah C-003',
-        //         driver: 'Sari Indah',
-        //         position: [-4.0125, 122.5287],
-        //         status: 'Maintenance',
-        //         speed: '0 km/h',
-        //         fuel: 67,
-        //         lastUpdate: '5 menit lalu'
-        //     }
-        // ];
-
-        // const tpsData = [
-        //     { id: 'TPS-001', name: 'TPS Pasar Mandonga', position: [-3.9892, 122.5156], status: 'pending' },
-        //     { id: 'TPS-002', name: 'TPS Kelurahan Kendari Barat', position: [-3.9934, 122.5089], status: 'completed' },
-        //     { id: 'TPS-003', name: 'TPS Jalan Sao-Sao', position: [-3.9856, 122.5201], status: 'pending' },
-        //     { id: 'TPS-004', name: 'TPS Perumahan Anduonohu', position: [-3.9978, 122.5234], status: 'pending' },
-        //     { id: 'TPS-005', name: 'TPS Kelurahan Korumba', position: [-4.0012, 122.5123], status: 'completed' },
-        //     { id: 'TPS-006', name: 'TPS Jalan Diponegoro', position: [-3.9823, 122.5067], status: 'pending' },
-        //     { id: 'TPS-007', name: 'TPS Kelurahan Watu-Watu', position: [-4.0067, 122.5298], status: 'pending' },
-        //     { id: 'TPS-008', name: 'TPS Pasar Sentral', position: [-3.9901, 122.5134], status: 'completed' },
-        //     { id: 'TPS-009', name: 'TPS Jalan Ahmad Yani', position: [-3.9845, 122.5112], status: 'pending' },
-        //     { id: 'TPS-010', name: 'TPS Kelurahan Poasia', position: [-4.0098, 122.5267], status: 'pending' },
-        //     { id: 'TPS-011', name: 'TPS Kampus Unhalu', position: [-3.9756, 122.5189], status: 'pending' },
-        //     { id: 'TPS-012', name: 'TPS Jalan Mayjen Sutoyo', position: [-3.9889, 122.5045], status: 'completed' },
-        //     { id: 'TPS-013', name: 'TPS Terminal Regional', position: [-4.0156, 122.5345], status: 'pending' },
-        //     { id: 'TPS-014', name: 'TPS Kelurahan Bende', position: [-4.0034, 122.4987], status: 'pending' },
-        //     { id: 'TPS-015', name: 'TPS Pantai Nambo', position: [-3.9723, 122.5234], status: 'pending' }
-        // ];
         let tpsData = [];
         let depotsData = [];
         // Initialize data from server
@@ -336,17 +284,6 @@
             alamat: item.alamat
         }));
 
-        // Initialize markers
-        function initializeMarkers() {
-            tpsData.forEach(tps => {
-                addTPSMarker(tps);
-            });
-
-            depotsData.forEach(depot => {
-                addDepotMarker(depot);
-            });
-        }
-
 
         // Initialize map
         function initializeMap() {
@@ -366,20 +303,19 @@
             markersLayerGroup = L.layerGroup().addTo(map);
             trucksLayerGroup = L.layerGroup().addTo(map);
 
-            // Add initial markers
+            // Add initial markers - TPS dan Depot
             addInitialMarkers();
-            // updateTruckList();
         }
 
         function addInitialMarkers() {
-            // Add truck markers
-            // trucksData.forEach(truck => {
-            //     addTruckMarker(truck);
-            // });
-
             // Add TPS markers
             tpsData.forEach(tps => {
                 addTPSMarker(tps);
+            });
+
+            // Add Depot markers
+            depotsData.forEach(depot => {
+                addDepotMarker(depot);
             });
         }
 
@@ -466,45 +402,7 @@
                 .addTo(markersLayerGroup);
         }
 
-
-        // function updateTruckList() {
-        //     const truckList = document.getElementById('truckList');
-        //     truckList.innerHTML = '';
-
-        //     trucksData.forEach(truck => {
-        //         const statusColors = {
-        //             'Dalam Perjalanan': 'bg-blue-100 text-blue-800',
-        //             'Siap Berangkat': 'bg-green-100 text-green-800',
-        //             'Maintenance': 'bg-yellow-100 text-yellow-800'
-        //         };
-
-        //         const truckElement = document.createElement('div');
-        //         truckElement.className = 'bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors cursor-pointer';
-        //         truckElement.innerHTML = `
-    //             <div class="flex items-center justify-between">
-    //                 <div class="flex-1">
-    //                     <h4 class="font-medium text-gray-900 text-sm">${truck.name}</h4>
-    //                     <p class="text-xs text-gray-600">${truck.driver}</p>
-    //                 </div>
-    //                 <div class="text-right">
-    //                     <span class="inline-block px-2 py-1 rounded-full text-xs font-medium ${statusColors[truck.status]}">
-    //                         ${truck.status}
-    //                     </span>
-    //                     <p class="text-xs text-gray-500 mt-1">${truck.fuel}% fuel</p>
-    //                 </div>
-    //             </div>
-    //         `;
-
-        //         truckElement.onclick = () => {
-        //             map.setView(truck.position, 16);
-        //             showTruckInfo(truck);
-        //         };
-
-        //         truckList.appendChild(truckElement);
-        //     });
-        // }
-
-        function showTruckInfo(truck) {
+       function showTruckInfo(truck) {
             const infoPanel = document.getElementById('infoPanel');
             const title = document.getElementById('infoPanelTitle');
             const content = document.getElementById('infoPanelContent');
@@ -616,13 +514,25 @@
 
         document.getElementById('showDepots').addEventListener('change', (e) => {
             if (e.target.checked) {
+                // Add depot markers if not already added
                 depotsData.forEach(depot => {
-                    addDepotMarker(depot);
+                    // Check if depot marker already exists
+                    let markerExists = false;
+                    map.eachLayer(layer => {
+                        if (layer instanceof L.Marker &&
+                            layer.options.icon?.options.className === 'depot-marker' &&
+                            layer.getLatLng().equals(L.latLng(depot.position))) {
+                            markerExists = true;
+                        }
+                    });
+                    if (!markerExists) {
+                        addDepotMarker(depot);
+                    }
                 });
             } else {
+                // Remove depot markers
                 map.eachLayer(layer => {
-                    if (layer instanceof L.Marker && layer.options.icon?.options.className ===
-                        'depot-marker') {
+                    if (layer instanceof L.Marker && layer.options.icon?.options.className === 'depot-marker') {
                         map.removeLayer(layer);
                     }
                 });
@@ -651,7 +561,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 initializeMap();
-                initializeMarkers(); // Load markers from server data
+                // initializeMarkers(); // Removed - already called in initializeMap()
 
                 lucide.createIcons();
             }, 500);

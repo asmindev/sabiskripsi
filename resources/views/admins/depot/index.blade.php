@@ -64,11 +64,11 @@
                     <h2 class="text-2xl font-bold text-gray-900">Data Depo</h2>
                     <p class="text-gray-600">Kelola lokasi depo dan tempat penyimpanan sampah</p>
                 </div>
-                <button onclick="openAddModal()"
+                <a href="{{ route('admin.depot.create') }}"
                     class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors duration-200 shadow-md hover:shadow-lg">
                     <i data-lucide="plus" class="h-4 w-4 mr-2"></i>
                     Tambah Depo
-                </button>
+                </a>
             </div>
 
             <!-- Stats Cards -->
@@ -163,6 +163,9 @@
                                         Kapasitas</th>
                                     <th
                                         class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                                        Type</th>
+                                    <th
+                                        class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                                         Status</th>
                                     <th
                                         class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
@@ -182,6 +185,18 @@
                                         ton
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
+                                        @if($depo->type === 'endpoint')
+                                        <span
+                                            class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Endpoint</span>
+                                        @elseif($depo->type === 'startpoint')
+                                        <span
+                                            class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">Startpoint</span>
+                                        @else
+                                        <span
+                                            class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Regular</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
                                         @if($depo->status === 'aktif')
                                         <span
                                             class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Aktif</span>
@@ -199,14 +214,16 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div class="flex items-center space-x-2">
-                                            <button onclick="editDepo({{ $depo->id }})"
+                                            <a href="{{ route('admin.depot.edit', $depo->id) }}"
                                                 class="text-indigo-600 hover:text-indigo-900">
                                                 <i data-lucide="edit" class="h-4 w-4"></i>
-                                            </button>
+                                            </a>
+                                            @if(!in_array($depo->type, ['endpoint', 'startpoint']))
                                             <button onclick="deleteDepo({{ $depo->id }})"
                                                 class="text-red-600 hover:text-red-900">
                                                 <i data-lucide="trash-2" class="h-4 w-4"></i>
                                             </button>
+                                            @endif
                                             <button
                                                 onclick="viewLocation({{ $depo->latitude }}, {{ $depo->longitude }})"
                                                 class="text-green-600 hover:text-green-900">
@@ -217,7 +234,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
                                         <div class="flex flex-col items-center">
                                             <i data-lucide="database" class="h-12 w-12 text-gray-300 mb-2"></i>
                                             <p>Tidak ada data depo</p>
@@ -233,8 +250,7 @@
         </div>
     </div>
     <!-- Modal Add/Edit Depo -->
-    <div id="depoModal"
-        class="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div id="depoModal" class="fixed inset-0 bg-black/50 bg-opacity-50 items-center justify-center p-4 z-50 hidden">
         <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div class="p-6">
                 <div class="flex items-center justify-between mb-6">
@@ -328,8 +344,7 @@
     </div>
 
     <!-- Modal Konfirmasi Hapus -->
-    <div id="deleteModal"
-        class="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div id="deleteModal" class="fixed inset-0 bg-black/50 bg-opacity-50 items-center justify-center p-4 z-50 hidden">
         <div class="bg-white rounded-xl max-w-md w-full">
             <div class="p-6">
                 <div class="flex items-center justify-center mb-4">
@@ -412,13 +427,12 @@
 
             function confirmDelete() {
                 if (deleteId) {
-                    fetch(`/depos/${deleteId}`, {
+                    fetch(`/depot/${deleteId}`, {
                             method: 'DELETE',
                             headers: {
                                 'X-CSRF-TOKEN': csrfToken
                             }
                         })
-                        .then(res => res.json())
                         .then(() => {
                             alert('Depo berhasil dihapus!');
                             closeDeleteModal();

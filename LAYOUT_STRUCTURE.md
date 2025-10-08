@@ -16,7 +16,7 @@ Digunakan untuk semua halaman yang memerlukan autentikasi (admin & pengguna).
 -   ✅ Font Awesome
 -   ✅ Google Fonts (Poppins)
 -   ✅ CSRF Token
--   ✅ Include Sidebar/Header (`includes.headers`)
+-   ✅ Sidebar dengan menu role-based
 -   ✅ Stack untuk styles & scripts tambahan
 
 **Digunakan oleh:**
@@ -134,7 +134,7 @@ Digunakan untuk halaman publik seperti login, register, dll.
 Gunakan `@include()` untuk component yang reusable:
 
 ```blade
-@include('includes.headers')     // Sidebar/Header
+<!-- Sidebar sudah terintegrasi langsung di app.blade.php -->
 @include('includes.footer')      // Footer (jika ada)
 @include('components.alert')     // Alert component
 ```

@@ -22,6 +22,7 @@ class DepoControllers extends Controller
             'longitude' => 'required|numeric',
             'kapasitas' => 'required|integer',
             'status' => 'required|in:aktif,maintenance,nonaktif',
+            'type' => 'required|in:endpoint,startpoint',
         ]);
 
         $depo = Depots::create($data);

@@ -14,5 +14,6 @@ class Depots extends Model
         'longitude',
         'kapasitas',
         'status',
+        'type',
     ];
 }
